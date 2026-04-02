@@ -3,59 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prompt Quick - Custom Engine</title>
+    <title>Prompt Quick - Research Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         textarea { line-height: 1.6; }
         .cat-btn { transition: all 0.2s ease; }
+        .hidden { display: none; }
+        /* 안내 문구 애니메이션 */
+        .guide-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
     </style>
 </head>
 <body class="bg-gray-100 flex items-center justify-center min-h-screen p-6">
 
     <div class="w-full max-w-2xl bg-white rounded-3xl shadow-2xl p-10">
         <h1 class="text-4xl font-extrabold text-gray-900 mb-8 text-center tracking-tight">
-            <span class="text-blue-600 text-5xl">🚀</span><br>Prompt Quick
+            <span class="text-blue-600 text-5xl">🚀</span><br>Quick Prompt
         </h1>
         
         <div id="category-container" class="flex flex-wrap gap-3 mb-6 justify-center">
             <button onclick="setCategory('시사/이슈')" class="cat-btn px-5 py-2.5 rounded-full border-2 border-blue-500 bg-blue-500 text-white font-bold text-sm">시사/이슈</button>
             <button onclick="setCategory('코딩')" class="cat-btn px-5 py-2.5 rounded-full border-2 border-gray-100 text-gray-600 hover:border-blue-500 font-bold text-sm">코딩</button>
             <button onclick="setCategory('학술/과제')" class="cat-btn px-5 py-2.5 rounded-full border-2 border-gray-100 text-gray-600 hover:border-blue-500 font-bold text-sm">학술/과제</button>
-            <button onclick="setCategory('상담')" class="cat-btn px-5 py-2.5 rounded-full border-2 border-gray-100 text-gray-600 hover:border-blue-500 font-bold text-sm">개인 상담</button>
+            <button onclick="setCategory('상담')" class="cat-btn px-5 py-2.5 rounded-full border-2 border-gray-100 text-gray-600 hover:border-blue-500 font-bold text-sm">심리 상담</button>
         </div>
 
         <div class="bg-gray-50 rounded-2xl p-6 mb-8 space-y-4 shadow-inner">
             <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
-                <span class="text-sm font-bold text-gray-500">지식 수준</span>
-                <div class="flex gap-2">
-                    <label class="cursor-pointer"><input type="radio" name="mode" value="비전문가" checked onclick="currentMode='비전문가'" class="hidden peer"><div class="px-4 py-1.5 rounded-lg border border-gray-200 text-xs peer-checked:bg-green-50 peer-checked:border-green-500 peer-checked:text-green-700 font-semibold">🌿 쉽게</div></label>
-                    <label class="cursor-pointer"><input type="radio" name="mode" value="전문가" onclick="currentMode='전문가'" class="hidden peer"><div class="px-4 py-1.5 rounded-lg border border-gray-200 text-xs peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700 font-semibold">💎 깊게</div></label>
+                <span class="text-sm font-bold text-gray-500">분석 모드</span>
+                <div id="mode-selector" class="flex gap-2">
+                    <label class="cursor-pointer"><input type="radio" name="mode" value="비전문가" checked onclick="setMode('비전문가')" class="hidden peer"><div class="px-3 py-1.5 rounded-lg border border-gray-200 text-xs peer-checked:bg-green-50 peer-checked:border-green-500 peer-checked:text-green-700 font-semibold">🌿 비전문가</div></label>
+                    <label class="cursor-pointer"><input type="radio" name="mode" value="전문가" onclick="setMode('전문가')" class="hidden peer"><div class="px-3 py-1.5 rounded-lg border border-gray-200 text-xs peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700 font-semibold">💎 전문가</div></label>
+                    <label id="paper-mode-label" class="hidden cursor-pointer"><input type="radio" name="mode" value="논문분석" onclick="setMode('논문분석')" class="hidden peer"><div class="px-3 py-1.5 rounded-lg border border-gray-200 text-xs peer-checked:bg-purple-50 peer-checked:border-purple-500 peer-checked:text-purple-700 font-semibold text-gray-400">🔍 논문분석</div></label>
                 </div>
             </div>
 
-            <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
-                <span class="text-sm font-bold text-gray-500">답변 길이</span>
-                <select id="length-opt" class="text-xs border border-gray-200 rounded-lg px-3 py-1.5 outline-none focus:ring-2 focus:ring-blue-300 bg-white">
-                    <option value="한 줄로 핵심만 요약해서">아주 짧게</option>
-                    <option value="" selected>보통 (기본값)</option>
-                    <option value="매우 길고 심층적인 리포트 형식으로">아주 길게</option>
-                </select>
+            <div id="counsel-only-option" class="hidden flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-gray-200 pt-4">
+                <span class="text-sm font-bold text-gray-500">상담 성향</span>
+                <div class="flex items-center gap-3">
+                    <span class="text-[11px] font-bold text-pink-500">공감과 위로</span>
+                    <label class="inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="empathy-setting" class="sr-only peer">
+                        <div class="relative w-10 h-5 bg-pink-400 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-400"></div>
+                    </label>
+                    <span class="text-[11px] font-bold text-blue-500">분석과 해결책</span>
+                </div>
             </div>
 
-            <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
-                <span class="text-sm font-bold text-gray-500">답변 어조</span>
-                <select id="tone-opt" class="text-xs border border-gray-200 rounded-lg px-3 py-1.5 outline-none focus:ring-2 focus:ring-blue-300 bg-white">
-                    <option value="" selected>기본 (설정 안 함)</option>
-                    <option value="친절하고 부드러운 말투로">친절하게</option>
-                    <option value="단호하고 분석적인 말투로">단호하고 이성적으로</option>
-                    <option value="정중하고 격식 있는 비즈니스 말투로">정중하게</option>
-                    <option value="유머러스하고 재치 있게">재치 있게</option>
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-gray-200 pt-4">
+                <span class="text-sm font-bold text-gray-500">답변 길이</span>
+                <select id="length-opt" class="text-xs border border-gray-200 rounded-lg px-3 py-1.5 outline-none focus:ring-2 focus:ring-blue-300 bg-white">
+                    <option value="" selected>보통 (기본값)</option>
+                    <option value="핵심 위주로 짧게">아주 짧게</option>
+                    <option value="심층적인 리포트 형식으로">아주 길게</option>
                 </select>
             </div>
         </div>
 
         <div class="space-y-6">
-            <input type="text" id="topic" placeholder="주제를 입력하세요" 
+            <input type="text" id="topic" placeholder="주제 또는 고민 내용을 입력하세요" 
                    class="w-full px-6 py-4 text-lg rounded-2xl border-2 border-gray-200 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all">
             
             <div id="template-area" class="flex flex-wrap gap-2 py-1"></div>
@@ -84,16 +90,36 @@
             '시사/이슈': ['인구 절벽 대응', '탄소 국경세', 'AI 윤리 규제'],
             '코딩': ['JWT 보안 인증', 'SQL 인젝션 방어', 'React 성능 최적화'],
             '학술/과제': ['딥러닝과 트랜스포머', '양자역학의 국소성', '행동 경제학 사례'],
-            '상담': ['번아웃 극복', '자취생 건강 관리', '시간 관리 전략']
+            '상담': ['요즘 너무 힘든 일이 있어', '진로 고민 때문에 머리가 복잡해', '인간관계가 내 마음같지 않아']
         };
 
         let currentCategory = '시사/이슈';
         let currentMode = '비전문가';
 
-        window.onload = () => renderTemplates();
+        window.onload = () => setCategory('시사/이슈');
 
         function setCategory(cat) {
             currentCategory = cat;
+            const paperLabel = document.getElementById('paper-mode-label');
+            const counselOption = document.getElementById('counsel-only-option');
+            const topicInput = document.getElementById('topic');
+            
+            if (cat === '학술/과제') {
+                paperLabel.classList.remove('hidden');
+                topicInput.placeholder = "주제, 논문 초록 또는 구글 스칼라 링크를 입력하세요";
+            } else {
+                paperLabel.classList.add('hidden');
+                if (currentMode === '논문분석') setMode('비전문가');
+            }
+
+            if (cat === '상담') {
+                counselOption.classList.remove('hidden');
+                topicInput.placeholder = "누구에게도 말하지 못한 고민을 입력하세요";
+            } else {
+                counselOption.classList.add('hidden');
+                topicInput.placeholder = "주제를 입력하세요";
+            }
+
             document.querySelectorAll('.cat-btn').forEach(btn => {
                 const isSelected = btn.innerText === cat;
                 btn.className = `cat-btn px-5 py-2.5 rounded-full border-2 font-bold text-sm ${isSelected ? 'border-blue-500 bg-blue-500 text-white' : 'border-gray-100 text-gray-600 hover:border-blue-500'}`;
@@ -101,9 +127,22 @@
             renderTemplates();
         }
 
+        function setMode(mode) {
+            currentMode = mode;
+            renderTemplates();
+        }
+
         function renderTemplates() {
             const container = document.getElementById('template-area');
             container.innerHTML = ''; 
+
+            if (currentCategory === '학술/과제' && currentMode === '논문분석') {
+                const guide = document.createElement('p');
+                guide.className = "w-full text-blue-600 text-xs font-bold mb-2 ml-1 guide-pulse";
+                guide.innerText = "🔍 논문 분석 모드에서는 구글 스칼라 링크가 필요합니다.";
+                container.appendChild(guide);
+            }
+
             templates[currentCategory].forEach(text => {
                 const tag = document.createElement('button');
                 tag.className = "text-xs bg-white border border-gray-200 text-gray-400 px-3 py-1.5 rounded-lg hover:text-blue-500 transition-all font-medium";
@@ -111,49 +150,58 @@
                 tag.onclick = () => { document.getElementById('topic').value = text; generate(); };
                 container.appendChild(tag);
             });
+
+            if (currentCategory === '학술/과제' && currentMode === '논문분석') {
+                const alert = document.createElement('p');
+                alert.className = "w-full text-gray-400 text-[10px] mt-2 ml-1 italic";
+                alert.innerText = "(단, 유료 논문이나 접근 제한이 걸린 건 초록 내용의 추가를 권장합니다.)";
+                container.appendChild(alert);
+            }
         }
 
         function generate() {
-            const topic = document.getElementById('topic').value;
+            const topicInput = document.getElementById('topic');
+            let topic = topicInput.value.trim();
             const lengthVal = document.getElementById('length-opt').value;
-            const toneVal = document.getElementById('tone-opt').value;
+            // empathy-setting: 해제(왼쪽)=공감, 체크(오른쪽)=분석
+            const isAnalysisMode = document.getElementById('empathy-setting').checked;
             if(!topic) return;
 
             let prompt = "";
             
-            if (currentMode === '전문가') {
-                const commonTail = "\n\n답변은 논리적인 근거를 바탕으로 단계별(Step-by-step)로 작성해 주세요. 전문적인 용어를 사용하되 가독성을 위해 소제목과 불렛포인트를 활용해 주세요.";
+            if (currentMode === '논문분석') {
+                prompt = `당신은 연구 심사위원입니다. 입력된 [ ${topic} ]이(가) 링크라면 접속하여 분석하고, 텍스트라면 초록/결론을 바탕으로 다음을 분석하세요:\n1. [연구 필요성]\n2. [핵심 결과]\n3. [학술적 가치]\n4. [보완점 제안]\n5. [검색 연계] Google Scholar 키워드\n답변은 논리적으로 단계별 작성하고 소제목을 활용하세요.`;
+            } else if (currentMode === '전문가') {
+                const commonTail = "\n\n답변은 논리적인 근거를 바탕으로 작성해 주세요. 전문 용어를 사용하되 가독성을 위해 소제목을 활용하세요.";
                 if(currentCategory === '시사/이슈') {
-                    prompt = `당신은 세계적인 정책 연구소의 수석 분석가입니다. 주제인 [${topic}]에 대해 다음 구조로 심층 분석하세요:\n1. 이슈의 역사적 배경과 현재 당면한 과제\n2. 주요 이해관계자들의 입장 분석\n3. 향후 발생 가능한 시나리오 3가지\n4. 해결을 위한 정책적 제언${commonTail}`;
+                    prompt = `당신은 정책 분석가입니다. [${topic}]에 대해 분석하세요:\n1. 역사적 배경\n2. 이해관계자 입장\n3. 시나리오 및 정책 제언${commonTail}`;
                 } else if(currentCategory === '코딩') {
-                    prompt = `당신은 15년 차 시니어 소프트웨어 아키텍트입니다. [${topic}] 구현 시 다음 사항을 포함해 주세요:\n1. 최적의 설계 패턴 제안\n2. 클린 코드 원칙 및 성능 최적화 가이드\n3. 보안 취약점 대책\n4. 모범 사례 코드 예시${commonTail}`;
+                    prompt = `당신은 시니어 아키텍트입니다. [${topic}]에 대해 작성하세요:\n1. 설계 패턴\n2. 보안 취약점 대책\n3. 모범 코드 예시${commonTail}`;
                 } else if(currentCategory === '학술/과제') {
-                    // 학술 전문가 모드 강화: 구글 스칼라 검색 키워드 유도 추가
-                    prompt = `당신은 해당 분야의 권위 있는 학술지 편집장입니다. [${topic}]에 대해 대학원 세미나 수준의 깊이로 설명해 주세요:\n1. 개념의 학술적 정의 및 패러다임의 변화\n2. 핵심 이론 및 관련 학자들의 논쟁점\n3. 현대 사회에서의 실질적 가치\n4. **[출처 확보] 해당 주제에 대해 최신 논문을 찾을 수 있도록 'Google Scholar' 검색용 영어 키워드 3개와 각각의 검색 결과 링크를 직접 생성하여 제공하세요.**\n5. 추가 연구 방향 제시${commonTail}`;
+                    prompt = `당신은 학술지 편집장입니다. [${topic}]에 대해 대학원 세미나 수준의 깊이로 설명해 주세요:\n1. 개념 정의\n2. 핵심 이론 및 논문 인용\n3. 현대적 의의\n4. Google Scholar 검색 키워드${commonTail}`;
                 } else {
-                    prompt = `당신은 전문 상담가입니다. [${topic}] 문제에 대해 조언해 주세요:\n1. 심리적 상태 해석\n2. 근본적인 원인 분석\n3. 행동 교정 전략 3단계\n4. 회복 탄력성 강화 방안${commonTail}`;
+                    const counselInstruction = isAnalysisMode 
+                        ? "정서적인 공감이나 위로의 말은 완전히 생략하고, 오직 객관적이고 차가운 논리적 분석과 실질적인 해결책 제안에만 집중하세요." 
+                        : "해결책을 제시하기 전에 먼저 내담자의 감정을 깊이 읽어주고 따뜻한 위로와 정서적 지지를 충분히 제공하세요.";
+                    prompt = `당신은 심리학 박사이자 전문 상담가입니다. [${topic}]에 대해 조언하세요:\n${counselInstruction}\n1. 상황에 대한 근본적인 원인 분석\n2. 심리학적/환경적 관점에서의 해석\n3. 현실적으로 즉시 실행 가능한 솔루션 제시`;
                 }
             } else {
-                const commonTail = "\n\n[답변 규칙]\n1. 어려운 용어는 피하고 쉬운 설명을 덧붙여 주세요.\n2. 일상생활의 예시나 비유를 들어 설명해 주세요.\n3. 소제목과 불렛포인트를 활용해 주세요.";
+                const commonTail = "\n\n[답변 규칙]\n1. 쉬운 단어만 사용하세요.\n2. 비유를 들어 설명하세요.\n3. 소제목과 이모지를 섞어주세요.";
                 if(currentCategory === '시사/이슈') {
-                    prompt = `당신은 친절한 시사 유튜버입니다. 주제인 [${topic}]에 대해 다음 순서로 알려주세요:\n1. 사건의 발단\n2. 찬반 입장 차이\n3. 우리 일상의 변화${commonTail}`;
+                    prompt = `당신은 쉬운 뉴스 유튜버입니다. [${topic}]에 대해 알려주세요:\n1. 한줄요약\n2. 왜 중요해?\n3. 우리 삶과의 연결${commonTail}`;
                 } else if(currentCategory === '코딩') {
-                    prompt = `당신은 친절한 선배 개발자입니다. [${topic}]에 대해 다음 내용을 포함해 주세요:\n1. 기술 필요성 설명\n2. 단순한 코드 예시\n3. 주의해야 할 팁${commonTail}`;
+                    prompt = `당신은 친절한 코딩 멘토입니다. [${topic}]에 대해 알려주세요:\n1. 비유 설명\n2. 왜 써?\n3. 맛보기 코드${commonTail}`;
                 } else if(currentCategory === '학술/과제') {
-                    // 학술 비전문가 모드 강화: 쉬운 검색어 유도
-                    prompt = `당신은 개념을 쉽게 설명하는 일타 강사입니다. [${topic}]에 대해 다음 구조로 알려주세요:\n1. 핵심 요약\n2. 쉬운 배경 설명\n3. 실제 적용 사례\n4. **[더 알아보기] 이 주제를 더 깊게 공부하고 싶을 때 Google Scholar에서 검색해볼 만한 쉬운 영어 검색어와 링크를 알려주세요.**${commonTail}`;
+                    prompt = `당신은 설명 끝판왕 강사입니다. [${topic}]에 대해 알려주세요:\n1. 전체 그림\n2. 핵심 원리\n3. 일상의 예시${commonTail}`;
                 } else {
-                    prompt = `당신은 현명한 동네 형/누나입니다. [${topic}] 문제에 대해 조언해 주세요:\n1. 따뜻한 공감\n2. 실천할 작은 행동 3가지\n3. 긍정적인 메시지${commonTail}`;
+                    const counselInstruction = isAnalysisMode 
+                        ? "불필요한 위로보다는 현실적이고 냉철한 조언 위주로," 
+                        : "따뜻한 형/누나처럼 내 마음을 먼저 토닥토닥 깊이 공감해준 뒤,";
+                    prompt = `당신은 현명한 동네 형/누나입니다. [${topic}]에 대해 조언해 주세요:\n1. [상황 분석] ${counselInstruction} 우리가 왜 이런 고민에 빠졌는지 쉽게 설명해줘.\n2. [해결 전략] 오늘 당장 해볼 수 있는 작은 행동 3가지.\n3. [마무리] 성향에 맞는 격려 한마디.`;
                 }
             }
 
-            let extras = [];
-            if(lengthVal) extras.push(`분량: ${lengthVal}`);
-            if(toneVal) extras.push(`어조: ${toneVal}`);
-            
-            if(extras.length > 0) {
-                prompt += `\n\n[추가 요구사항]\n- ${extras.join('\n- ')}`;
-            }
+            if(lengthVal) prompt += `\n\n[추가 사항] 분량은 ${lengthVal}.`;
 
             const resultText = document.getElementById('result-text');
             resultText.value = prompt;
